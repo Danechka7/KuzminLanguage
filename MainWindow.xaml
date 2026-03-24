@@ -5,8 +5,21 @@
         xmlns:mc="http://schemas.openxmlformats.org/markup-compatibility/2006"
         xmlns:local="clr-namespace:KuzminLanguage"
         mc:Ignorable="d"
-        Title="MainWindow" Height="450" Width="800">
-    <Grid>
+        Title="KuzminЛангуаге" Height="450" Width="880" FontFamily="Comic Sans MS">
+    <Grid Background="#FFE7FABF">
         
+        <Grid.RowDefinitions>
+            <RowDefinition Height="80"/>
+            <RowDefinition Height="*"/>
+            <RowDefinition Height="40"/>
+        </Grid.RowDefinitions>
+        
+        <Image Source="/res/school_logo.png" Width="60" Height="60" HorizontalAlignment="Left" Margin="20,10,0,0"/>
+        <TextBlock Text="Kuzmin Language" FontSize="28" FontWeight="Bold" HorizontalAlignment="Center" VerticalAlignment="Center"/>
+
+        <Frame Name="MainFrame" Grid.Row="1" NavigationUIVisibility="Hidden"/>
+
+        <Button Name="BackButton" Grid.Row="2" Content="Назад" Width="100" Height="30" 
+                HorizontalAlignment="Right" Margin="10" Click="BackButton_Click" Visibility="Collapsed"/>
     </Grid>
 </Window>

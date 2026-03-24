@@ -23,6 +23,18 @@ namespace KuzminLanguage
         public MainWindow()
         {
             InitializeComponent();
+            Manager.MainFrame = MainFrame;
+            MainFrame.Navigate(new ClientPage());
+        }
+
+        private void BackButton_Click(object sender, RoutedEventArgs e)
+        {
+            if (MainFrame.CanGoBack) MainFrame.GoBack();
+        }
+
+        private void MainFrame_ContentRendered(object sender, NavigationEventArgs e)
+        {
+            BackButton.Visibility = MainFrame.CanGoBack ? Visibility.Visible : Visibility.Collapsed;
         }
     }
 }
