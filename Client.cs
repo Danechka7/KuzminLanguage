@@ -11,7 +11,9 @@ namespace KuzminLanguage
 {
     using System;
     using System.Collections.Generic;
-    
+    using System.IO;
+    using System.Linq;
+
     public partial class Client
     {
         public Client()
@@ -30,6 +32,13 @@ namespace KuzminLanguage
         public string Phone { get; set; }
         public string GenderCode { get; set; }
         public string PhotoPath { get; set; }
+        public string GenderTitle
+        {
+            get
+            {
+                return Gender.Name;
+            }
+        }
         public string FullName
         {
             get
@@ -37,7 +46,26 @@ namespace KuzminLanguage
                 return "ID: " + ID + " " + LastName + " " + FirstName + " " + Patronymic;
             }
         }
+        public string ClientPhotoPath
+        {
+            get
+            {
+                if (string.IsNullOrEmpty(PhotoPath))
+                    return GetDefaultPhotoPath();
 
+                string fullPath = System.IO.Path.Combine(AppDomain.CurrentDomain.BaseDirectory, PhotoPath);
+
+                if (File.Exists(fullPath))
+                    return fullPath;
+
+                return GetDefaultPhotoPath();
+            }
+        }
+        private string GetDefaultPhotoPath()
+        {
+            string defaultPath = Path.Combine(AppDomain.CurrentDomain.BaseDirectory, "Клиенты", "picture.png");
+            return File.Exists(defaultPath) ? defaultPath : null;
+        }
         public string ImagePath
         {
             get
@@ -82,6 +110,66 @@ namespace KuzminLanguage
                     return Birthday.ToShortDateString();
                 else
                     return "";
+            }
+        }
+        public string LastVisitData
+        {
+            get
+            {
+                var lastVisit = ClientService.Where(p => p.ClientID == this.ID).OrderByDescending(p => p.StartTime).FirstOrDefault();
+                if (lastVisit == null)
+                {
+                    return "нет";
+                }
+                else
+                {
+                    DateTime startTime = lastVisit.StartTime;
+                    return startTime.ToShortDateString();
+                }
+            }
+        }
+
+        public int CountVisit
+        {
+            get
+            {
+                if (ClientService != null)
+                {
+                    return ClientService.Count;
+                }
+                return 0;
+            }
+        }
+        public string currentnumber
+        {
+            get
+            {
+                string CurrentPhone = "7";
+                for (int i = 0; i < Phone.Length; i++)
+                {
+                    if ((this.Phone[i] == '0') ||
+                        (this.Phone[i] == '1') || (this.Phone[i] == '2') || (this.Phone[i] == '3') ||
+                        (this.Phone[i] == '4') || (this.Phone[i] == '5') || (this.Phone[i] == '6') ||
+                        (this.Phone[i] == '7') || (this.Phone[i] == '8') || (this.Phone[i] == '9'))
+                        CurrentPhone += this.Phone[i].ToString();
+                }
+                return CurrentPhone;
+            }
+        }
+        public string LastVisits
+        {
+            get
+            {
+                DateTime LastClientVisit = new DateTime(1000, 1, 1);
+                foreach (ClientService ClientServices in ClientService)
+                {
+                    if (ClientServices.StartTime > LastClientVisit)
+                        LastClientVisit = ClientServices.StartTime;
+                }
+                if (LastClientVisit > new DateTime(1000, 1, 1))
+                    return LastClientVisit.ToString();
+                else
+                    return "Не посещал(а)";
             }
         }
         public virtual Gender Gender { get; set; }

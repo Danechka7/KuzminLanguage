@@ -12,6 +12,7 @@
         <Grid.RowDefinitions>
             <RowDefinition Height="50"></RowDefinition>
             <RowDefinition Height="*"></RowDefinition>
+            <RowDefinition Height="auto"></RowDefinition>
         </Grid.RowDefinitions>
         <Grid.ColumnDefinitions>
             <ColumnDefinition Width="*"></ColumnDefinition>
@@ -24,8 +25,8 @@
                 <DataTemplate>
                     <Grid>
                         <Grid.ColumnDefinitions>
-                            <ColumnDefinition Width="180"></ColumnDefinition>
-                            <ColumnDefinition Width="*"></ColumnDefinition>
+                            <ColumnDefinition Width="150"></ColumnDefinition>
+                            <ColumnDefinition Width="250"></ColumnDefinition>
                             <ColumnDefinition Width="*"></ColumnDefinition>
                         </Grid.ColumnDefinitions>
                         <Grid.RowDefinitions>
@@ -35,7 +36,7 @@
                             <RowDefinition Height="*"/>
                             <RowDefinition Height="*"/>
                         </Grid.RowDefinitions>
-                        <Image Width="150" Grid.Column="0" Grid.RowSpan="5" Stretch="UniformToFill" HorizontalAlignment="Center">
+                        <Image Width="100" Grid.Column="0" Grid.RowSpan="5" Stretch="UniformToFill" HorizontalAlignment="Center">
                             <Image.Source>
                                 <Binding Path="ImagePath">
                                     <Binding.TargetNullValue>
@@ -49,14 +50,61 @@
                         <StackPanel Grid.Row="0" Grid.Column="1" Grid.ColumnSpan="2" Orientation="Horizontal">
                             <TextBlock Text="{Binding FullName}" FontSize="20"></TextBlock>
                         </StackPanel>
-                        <TextBlock Text="{Binding Genderous}" FontSize="15" Grid.Row="1" Grid.Column="1"></TextBlock>
-                        <TextBlock Text="{Binding Phone, StringFormat=Телефон: {0}}" FontSize="15" Grid.Row="1" Grid.Column="2"></TextBlock>
-                        <TextBlock Text="{Binding Email, StringFormat=e-mail: {0}}" FontSize="15" Grid.Row="2" Grid.Column="1" Grid.ColumnSpan="2"></TextBlock>
+                        <TextBlock Text="{Binding GenderTitle, StringFormat= Пол: {0}}" FontSize="15" Grid.Row="1" Grid.Column="1"></TextBlock>
+                        <TextBlock Text="{Binding Phone, StringFormat=Номер: {0}}" FontSize="15" Grid.Row="1" Grid.Column="2"></TextBlock>
+                        <TextBlock Text="{Binding Email, StringFormat=Почта: {0}}" FontSize="15" Grid.Row="2" Grid.Column="1"></TextBlock>
                         <TextBlock Text="{Binding BirthdayDateString, StringFormat=Дата рождения: {0}}" FontSize="15" Grid.Row="3" Grid.Column="1" Grid.ColumnSpan="2"></TextBlock>
                         <TextBlock Text="{Binding RegisterDateString, StringFormat=Дата регистрации: {0}}" FontSize="15" Grid.Row="4" Grid.Column="1" Grid.ColumnSpan="2"></TextBlock>
+                        <TextBlock Text="{Binding LastVisits, StringFormat=Дата посл.посещения: {0}}" FontSize="15" Grid.Row="2" Grid.Column="2"></TextBlock>
+                        <TextBlock Text="{Binding CountVisit, StringFormat=Кол-во посещений: {0}}" FontSize="15" Grid.Row="3" Grid.Column="2"></TextBlock>
                     </Grid>
                 </DataTemplate>
             </ListView.ItemTemplate>
         </ListView>
+        <WrapPanel Grid.Row="0" Grid.ColumnSpan="4" Orientation="Horizontal" VerticalAlignment="Center">
+            <StackPanel Margin="10" Orientation="Horizontal">
+                <TextBlock Text="Поиск:   " TextAlignment="Left" Width="75" FontSize="15"></TextBlock>
+                <TextBox Name="TBoxSearch" Width="200" FontSize="15" TextChanged="TBoxSearch_TextChanged"></TextBox>
+            </StackPanel>
+            <StackPanel Margin="10" Orientation="Horizontal">
+                <TextBlock Text="Пол:   " TextAlignment="Left" Width="50" FontSize="15"></TextBlock>
+                <ComboBox Name="GenderCombo" Width="100" HorizontalAlignment="Left" FontSize="15" SelectionChanged="GenderCombo_SelectionChanged">
+                    <TextBlock>Все</TextBlock>
+                    <TextBlock>Мужской</TextBlock>
+                    <TextBlock>Женский</TextBlock>
+                </ComboBox>
+            </StackPanel>
+            <StackPanel Margin="10" Orientation="Horizontal">
+                <TextBlock Text="Сортировка:   " TextAlignment="Left" Width="100" FontSize="15"></TextBlock>
+                <ComboBox Name="ComboType" Width="100" HorizontalAlignment="Left" FontSize="15" SelectionChanged="ComboType_SelectionChanged">
+                    <TextBlock>Нет</TextBlock>
+                    <TextBlock>По фамилии от А до Я</TextBlock>
+                    <TextBlock>По дате последнего посещения</TextBlock>
+                    <TextBlock>По количеству посещений</TextBlock>
+                </ComboBox>
+            </StackPanel>
+        </WrapPanel>
+        <StackPanel Grid.Row="2" Grid.ColumnSpan="5" Orientation="Horizontal" HorizontalAlignment="Center" Margin="10">
+            <ComboBox Name="PageSizeCombo" Width="60" SelectionChanged="PageSizeCombo_SelectionChanged" Margin="5">
+                <ComboBoxItem Content="10" IsSelected="True"/>
+                <ComboBoxItem Content="50"/>
+                <ComboBoxItem Content="200"/>
+                <ComboBoxItem Content="Все"/>
+            </ComboBox>
+            <Button Name="LeftDirButton" Content="&lt;" Width="30" Height="30" Click="LeftDirButton_Click" Margin="2"/>
+            <ListBox Name="PageListBox" BorderThickness="0" SelectionChanged="PageListBox_SelectionChanged" 
+         VerticalAlignment="Center" Height="35">
+                <ListBox.ItemsPanel>
+                    <ItemsPanelTemplate>
+                        <WrapPanel Orientation="Horizontal"/>
+                    </ItemsPanelTemplate>
+                </ListBox.ItemsPanel>
+            </ListBox>
+            <Button Name="RightDirButton" Content="&gt;" Width="30" Height="30" Click="RightDirButton_Click" Margin="2"/>
+            <TextBlock Name="CountText" VerticalAlignment="Center" Margin="20,5,5,5"/>
+            <Button Name="DeleteBtn" Content="Удалить" Width="90" Click="DeleteBtn_Click" Margin="20,5,5,5"/>
+            <Button Name="AddBtn" Content="Добавить" Width="100" Click="AddBtn_Click" Margin="20,5,5,5"/>
+            <Button Name="EditBtn" Content="Редактировать" Width="150" Click="EditBtn_Click" Margin="20,5,5,5"/>
+        </StackPanel>
     </Grid>
 </Page>
