@@ -19,7 +19,9 @@ namespace KuzminLanguage
         public AddEditPage()
         {
             InitializeComponent();
-
+            // При добавлении - скрываем ID
+            IdLabel.Visibility = Visibility.Collapsed;
+            TBoxID.Visibility = Visibility.Collapsed;
         }
 
         public AddEditPage(Client selectedClient)
@@ -27,6 +29,10 @@ namespace KuzminLanguage
             InitializeComponent();
             _currentClient = selectedClient;
             _isEditMode = true;
+            // При редактировании - показываем ID только для чтения
+            IdLabel.Visibility = Visibility.Visible;
+            TBoxID.Visibility = Visibility.Visible;
+            TBoxID.IsReadOnly = true;
             LoadClientData();
         }
 
@@ -34,7 +40,7 @@ namespace KuzminLanguage
         {
             TBoxID.Text = _currentClient.ID.ToString();
             TBoxID.IsReadOnly = true;
-
+            TBoxID.Text = _currentClient.ID.ToString();
             TBoxFirstName.Text = _currentClient.LastName;
             TBoxLastName.Text = _currentClient.FirstName;
             TBoxPathronic.Text = _currentClient.Patronymic;
@@ -58,19 +64,64 @@ namespace KuzminLanguage
         {
             try
             {
-                if (File.Exists(path))
+                if (string.IsNullOrEmpty(path))
                 {
-                    var bitmap = new BitmapImage();
-                    bitmap.BeginInit();
-                    bitmap.UriSource = new Uri(path, UriKind.Absolute);
-                    bitmap.CacheOption = BitmapCacheOption.OnLoad;
-                    bitmap.EndInit();
-                    ClientImage.Source = bitmap;
+                    ClientImage.Source = null;
+                    return;
                 }
+
+                BitmapImage bitmap = new BitmapImage();
+                bitmap.BeginInit();
+
+                // Проверяем, является ли путь абсолютным или относительным
+                if (path.StartsWith("/") || path.StartsWith("Клиенты") || path.StartsWith("res"))
+                {
+                    // Относительный путь - строим полный
+                    string fullPath = System.IO.Path.Combine(AppDomain.CurrentDomain.BaseDirectory, path);
+                    if (System.IO.File.Exists(fullPath))
+                    {
+                        bitmap.UriSource = new Uri(fullPath, UriKind.Absolute);
+                    }
+                    else
+                    {
+                        // Пробуем найти файл
+                        string[] possiblePaths = {
+                    System.IO.Path.Combine(AppDomain.CurrentDomain.BaseDirectory, "Клиенты", System.IO.Path.GetFileName(path)),
+                    System.IO.Path.Combine(AppDomain.CurrentDomain.BaseDirectory, "res", "Клиенты", System.IO.Path.GetFileName(path)),
+                    System.IO.Path.Combine(AppDomain.CurrentDomain.BaseDirectory, path)
+                };
+
+                        string existingPath = possiblePaths.FirstOrDefault(p => System.IO.File.Exists(p));
+                        if (existingPath != null)
+                        {
+                            bitmap.UriSource = new Uri(existingPath, UriKind.Absolute);
+                        }
+                        else
+                        {
+                            ClientImage.Source = null;
+                            return;
+                        }
+                    }
+                }
+                else if (System.IO.File.Exists(path))
+                {
+                    // Абсолютный путь
+                    bitmap.UriSource = new Uri(path, UriKind.Absolute);
+                }
+                else
+                {
+                    ClientImage.Source = null;
+                    return;
+                }
+
+                bitmap.CacheOption = BitmapCacheOption.OnLoad;
+                bitmap.EndInit();
+                ClientImage.Source = bitmap;
             }
             catch (Exception ex)
             {
                 MessageBox.Show($"Ошибка загрузки изображения: {ex.Message}");
+                ClientImage.Source = null;
             }
         }
 
@@ -115,19 +166,45 @@ namespace KuzminLanguage
             // Проверка email
             if (!string.IsNullOrWhiteSpace(TBoxEmail.Text))
             {
-                Regex emailRegex = new Regex(@"^[^@\s]+@[^@\s]+\.[^@\s]+$");
+                // Только английские буквы, цифры и точки до @, после @ только английские буквы и точки
+                Regex emailRegex = new Regex(@"^[a-zA-Z0-9._%+-]+@[a-zA-Z0-9.-]+\.[a-zA-Z]{2,}$");
                 if (!emailRegex.IsMatch(TBoxEmail.Text))
                 {
-                    MessageBox.Show("Введите корректный email");
+                    MessageBox.Show("Введите корректный email (только английские буквы, пример: name@mail.ru)");
                     return false;
                 }
             }
 
             // Проверка телефона (цифры, +, -, (), пробел)
+            // Проверка телефона (только цифры и символы: +, -, (), пробел)
+            // Проверка телефона (ровно 10 цифр)
+            if (string.IsNullOrWhiteSpace(TBoxPhone.Text))
+            {
+                MessageBox.Show("Введите номер телефона!");
+                return false;
+            }
+
+            // Запрещаем русские буквы
+            Regex rusRegex = new Regex(@"[а-яА-ЯёЁ]");
+            if (rusRegex.IsMatch(TBoxPhone.Text))
+            {
+                MessageBox.Show("Номер телефона не может содержать русские буквы!");
+                return false;
+            }
+
+            // Разрешаем только цифры и символы: +, -, (, ), пробел
             Regex phoneRegex = new Regex(@"^[\d\+\-\s\(\)]+$");
-            if (string.IsNullOrWhiteSpace(TBoxPhone.Text) || !phoneRegex.IsMatch(TBoxPhone.Text))
+            if (!phoneRegex.IsMatch(TBoxPhone.Text))
             {
                 MessageBox.Show("Телефон может содержать только цифры и символы: +, -, (), пробел");
+                return false;
+            }
+
+            // Подсчитываем количество цифр в номере
+            int digitCount = TBoxPhone.Text.Count(char.IsDigit);
+            if (digitCount != 10)
+            {
+                MessageBox.Show($"Номер телефона должен содержать ровно 10 цифр! Сейчас {digitCount} цифр.");
                 return false;
             }
 
@@ -135,6 +212,12 @@ namespace KuzminLanguage
             if (BirthDate.SelectedDate == null)
             {
                 MessageBox.Show("Выберите дату рождения");
+                return false;
+            }
+
+            if (BirthDate.SelectedDate > DateTime.Today)
+            {
+                MessageBox.Show("Дата рождения не может быть больше сегодняшней даты!");
                 return false;
             }
 
@@ -150,52 +233,42 @@ namespace KuzminLanguage
 
         private void SelectPhotoBtn_Click(object sender, RoutedEventArgs e)
         {
-            string clientsFolder = System.IO.Path.Combine(AppDomain.CurrentDomain.BaseDirectory, "Клиенты");
-            var openDialog = new OpenFileDialog()
-            {
-                Filter = "Image files|*.jpg;*.jpeg;*.png;*.bmp",
-                InitialDirectory = clientsFolder
-            };
+            var openDialog = new OpenFileDialog();
+            openDialog.Filter = "Image files (*.jpg, *.png, *.jpeg)|*.jpg;*.png;*.jpeg|All files (*.*)|*.*";
 
             if (openDialog.ShowDialog() == true)
             {
                 try
                 {
-
                     string selectedFile = openDialog.FileName;
-                    string fileName = System.IO.Path.GetFileName(selectedFile);
-                    string destPath = System.IO.Path.Combine(clientsFolder, fileName);
 
-                    if (!System.IO.Path.GetDirectoryName(selectedFile).Equals(clientsFolder, StringComparison.OrdinalIgnoreCase))
-                    {
-                        // Проверяем дубликаты
-                        int i = 1;
-                        while (File.Exists(destPath))
-                        {
-                            string nameWithoutExt = System.IO.Path.GetFileNameWithoutExtension(fileName);
-                            string ext = System.IO.Path.GetExtension(fileName);
-                            destPath = System.IO.Path.Combine(clientsFolder, $"{nameWithoutExt}_{i++}{ext}");
-                        }
-                        File.Copy(selectedFile, destPath);
-                    }
-                    else
-                    {
-                        destPath = selectedFile;
-                    }
+                    // Создаем уникальное имя для фото
+                    string photosDir = System.IO.Path.Combine(AppDomain.CurrentDomain.BaseDirectory, "Клиенты");
+                    if (!System.IO.Directory.Exists(photosDir))
+                        System.IO.Directory.CreateDirectory(photosDir);
 
-                    string relativePath = System.IO.Path.Combine("Клиенты", System.IO.Path.GetFileName(destPath));
-                    _currentClient.PhotoPath = relativePath;
+                    // Используем временное уникальное имя
+                    string extension = System.IO.Path.GetExtension(selectedFile);
+                    string newFileName = $"temp_{DateTime.Now.Ticks}{extension}";
+                    string destPath = System.IO.Path.Combine(photosDir, newFileName);
 
+                    // Копируем файл
+                    System.IO.File.Copy(selectedFile, destPath, true);
+
+                    // Сохраняем путь
+                    _selectedPhotoPath = destPath;
+
+                    // Загружаем изображение
                     var bitmap = new BitmapImage();
                     bitmap.BeginInit();
-                    bitmap.UriSource = new Uri(destPath);
+                    bitmap.UriSource = new Uri(destPath, UriKind.Absolute);
                     bitmap.CacheOption = BitmapCacheOption.OnLoad;
                     bitmap.EndInit();
                     ClientImage.Source = bitmap;
                 }
                 catch (Exception ex)
                 {
-                    MessageBox.Show($"Ошибка: {ex.Message}", "Ошибка", MessageBoxButton.OK, MessageBoxImage.Error);
+                    MessageBox.Show($"Ошибка загрузки фото: {ex.Message}");
                 }
             }
         }
@@ -224,28 +297,30 @@ namespace KuzminLanguage
                 _currentClient.GenderCode = ComboGender.SelectedIndex == 0 ? "м" : "ж";
                 _currentClient.RegistrationDate = _isEditMode ? _currentClient.RegistrationDate : DateTime.Now;
 
-                if (!string.IsNullOrEmpty(_selectedPhotoPath) && _selectedPhotoPath != _currentClient.PhotoPath)
+                // Сохраняем фото - просто берем путь
+                if (!string.IsNullOrEmpty(_selectedPhotoPath))
                 {
-                    string fileName = $"client_{DateTime.Now.Ticks}_{System.IO.Path.GetFileName(_selectedPhotoPath)}";
-                    string destPath = System.IO.Path.Combine(AppDomain.CurrentDomain.BaseDirectory, "res", "Клиенты", fileName);
-
-                    Directory.CreateDirectory(System.IO.Path.GetDirectoryName(destPath));
-                    File.Copy(_selectedPhotoPath, destPath, true);
-                    _currentClient.PhotoPath = destPath;
+                    _currentClient.PhotoPath = _selectedPhotoPath;
+                }
+                else if (string.IsNullOrEmpty(_currentClient.PhotoPath))
+                {
+                    _currentClient.PhotoPath = System.IO.Path.Combine("Клиенты", "picture.png");
                 }
 
                 context.SaveChanges();
                 MessageBox.Show("Данные успешно сохранены!");
-
-                if (NavigationService != null)
-                    NavigationService.GoBack();
+                NavigationService.GoBack();
             }
             catch (Exception ex)
             {
                 MessageBox.Show($"Ошибка сохранения: {ex.Message}");
             }
         }
-
+        private void CancelBtn_Click(object sender, RoutedEventArgs e)
+        {
+            if (NavigationService.CanGoBack)
+                NavigationService.GoBack();
+        }
         private void ComboGender_SelectionChanged(object sender, SelectionChangedEventArgs e)
         {
 

@@ -22,14 +22,25 @@ namespace KuzminLanguage
         public ClientPage()
         {
             InitializeComponent();
+            this.IsVisibleChanged += ClientPage_IsVisibleChanged;
             RefreshData();
         }
-
-        private void RefreshData()
+        public void RefreshData()
         {
-            _allClients = BDKuzmin_LanguageSchoolEntities.GetContext().Client.ToList();
+            var context = BDKuzmin_LanguageSchoolEntities.GetContext();
+            _allClients = context.Client.ToList();
             ApplyFiltersAndSearch();
         }
+
+
+        private void ClientPage_IsVisibleChanged(object sender, DependencyPropertyChangedEventArgs e)
+        {
+            if (this.IsVisible)
+            {
+                RefreshData();
+            }
+        }
+
 
         private void ApplyFiltersAndSearch()
         {
@@ -38,14 +49,21 @@ namespace KuzminLanguage
                 result = result.Where(c => c.GenderCode == "м");
             else if (_genderFilter == "Женский")
                 result = result.Where(c => c.GenderCode == "ж");
+
             if (!string.IsNullOrWhiteSpace(_searchText))
             {
+                string searchText = _searchText.ToLower();
+                // Очищаем поисковую строку от скобок, пробелов, дефисов для поиска по телефону
+                string searchPhoneDigits = Regex.Replace(searchText, @"[^\d]", "");
+
                 result = result.Where(c =>
-                    (c.LastName + " " + c.FirstName + " " + c.Patronymic).ToLower().Contains(_searchText.ToLower()) ||
-                    (c.Email ?? "").ToLower().Contains(_searchText.ToLower()) ||
-                    (c.currentnumber ?? "").ToLower().Contains(_searchText.ToLower())
+                    (c.LastName + " " + c.FirstName + " " + c.Patronymic).ToLower().Contains(searchText) ||
+                    (c.Email ?? "").ToLower().Contains(searchText) ||
+                    // Очищаем телефон от скобок, пробелов, дефисов перед поиском
+                    Regex.Replace(c.Phone ?? "", @"[^\d]", "").Contains(searchPhoneDigits)
                 );
             }
+
             if (_sortType == "По фамилии от А до Я")
                 result = result.OrderBy(c => c.LastName);
             else if (_sortType == "По дате последнего посещения")
@@ -198,6 +216,10 @@ namespace KuzminLanguage
             {
                 MessageBox.Show($"Ошибка: {ex.Message}");
             }
+        }
+        private void Page_Loaded(object sender, RoutedEventArgs e)
+        {
+            RefreshData();
         }
     }
 }

@@ -6,7 +6,7 @@
       xmlns:local="clr-namespace:KuzminLanguage"
       mc:Ignorable="d" 
       d:DesignHeight="450" d:DesignWidth="800"
-      Title="ClientPage" FontFamily="Comic Sans MS">
+      Title="ClientPage" FontFamily="Comic Sans MS"  Loaded="Page_Loaded">
 
     <Grid>
         <Grid.RowDefinitions>
@@ -38,13 +38,7 @@
                         </Grid.RowDefinitions>
                         <Image Width="100" Grid.Column="0" Grid.RowSpan="5" Stretch="UniformToFill" HorizontalAlignment="Center">
                             <Image.Source>
-                                <Binding Path="ImagePath">
-                                    <Binding.TargetNullValue>
-                                        <ImageSource>
-                                            /res/school_logo.png
-                                        </ImageSource>
-                                    </Binding.TargetNullValue>
-                                </Binding>
+                                <Binding Path="PhotoPath" TargetNullValue="/Клиенты/picture.png"/>
                             </Image.Source>
                         </Image>
                         <StackPanel Grid.Row="0" Grid.Column="1" Grid.ColumnSpan="2" Orientation="Horizontal">
